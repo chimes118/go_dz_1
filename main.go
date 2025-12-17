@@ -15,12 +15,6 @@ func main() {
 	for {
 		resp, err := http.Get(url)
 		if err != nil {
-			// сервер завершился — корректно выходим
-			return
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
 			return
 		}
 
@@ -47,10 +41,12 @@ func main() {
 		netTotal, _ := strconv.ParseInt(record[5], 10, 64)
 		netUsed, _ := strconv.ParseInt(record[6], 10, 64)
 
+		// Load Average
 		if load > 30 {
 			fmt.Printf("Load Average is too high: %d\n", load)
 		}
 
+		// Memory
 		if memTotal > 0 {
 			memPercent := memUsed * 100 / memTotal
 			if memPercent > 80 {
@@ -58,16 +54,21 @@ func main() {
 			}
 		}
 
+		// Disk — ВАЖНО!
 		if diskTotal > 0 {
-			freeMb := (diskTotal - diskUsed) / (1024 * 1024)
-			if freeMb*100/diskTotal < 10 {
+			freeBytes := diskTotal - diskUsed
+			freePercent := freeBytes * 100 / diskTotal
+
+			if freePercent < 10 {
+				freeMb := freeBytes / (1024 * 1024)
 				fmt.Printf("Free disk space is too low: %d Mb left\n", freeMb)
 			}
 		}
 
+		// Network
 		if netTotal > 0 {
-			freeMbit := (netTotal - netUsed) / 1_000_000
 			if netUsed*100/netTotal > 90 {
+				freeMbit := (netTotal - netUsed) / 1_000_000
 				fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", freeMbit)
 			}
 		}
